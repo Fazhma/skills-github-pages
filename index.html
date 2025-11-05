@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专属祝福信件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #faf5f0;
+            font-family: "KaiTi", "Microsoft YaHei", sans-serif;
+            overflow-x: hidden;
+            padding: 20px 0;
+            min-height: 130vh;
+            touch-action: manipulation;
+        }
+        .open-tip {
+            position: fixed;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 18px;
+            z-index: 50;
+            animation: bounce 1.8s infinite;
+            text-align: center;
+            width: 90%;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translate(-50%, -50%); }
+            50% { transform: translate(-50%, -58%); }
+        }
+        .letter-container {
+            width: 95%;
+            max-width: 700px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 80px 50px;
+            border-radius: 6px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            position: relative;
+            border: 1px solid #e0d6cc;
+            overflow: hidden;
+            transition: transform 0.8s ease;
+            transform-origin: top center;
+            margin-top: 150px;
+            height: 500px;
+        }
+        .letter-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(135deg, transparent 48%, #f0e8df 48%, #f0e8df 52%, transparent 52%);
+            border-bottom: 1px solid #e0d6cc;
+            transition: transform 0.8s ease 0.2s;
+            transform-origin: top center;
+            z-index: 2;
+        }
+        .letter-container::after {
+            content: "💌";
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border: 1px solid #e0d6cc;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            background: #fff;
+            z-index: 3;
+        }
+        body.scroll-active .letter-container {
+            transform: rotateX(35deg) translateY(-30px);
+            box-shadow: 0 25px 40px rgba(0,0,0,0.12);
+        }
+        body.scroll-active .letter-container::before {
+            transform: rotateX(180deg) translateY(-15px);
+        }
+        body.scroll-active .open-tip {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+        .photo-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.8s ease 0.5s;
+            z-index: 100;
+            pointer-events: auto;
+        }
+        body.scroll-active .photo-modal {
+            opacity: 1;
+            visibility: visible;
+        }
+        .photo-img {
+            max-width: 95%;
+            max-height: 90vh;
+            border-radius: 6px;
+            transform: scale(0.9);
+            transition: transform 0.8s ease 0.8s;
+            border: 10px solid #fff;
+            box-shadow: 0 0 25px rgba(0,0,0,0.3);
+        }
+        body.scroll-active .photo-img {
+            transform: scale(1);
+        }
+        .close-photo {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            width: 45px;
+            height: 45px;
+            background: rgba(255,255,255,0.85);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 120;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease 1s;
+        }
+        body.scroll-active .close-photo {
+            opacity: 1;
+            visibility: visible;
+        }
+        .music-btn {
+            position: fixed;
+            top: 25px;
+            left: 25px;
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: #e63946;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            cursor: pointer;
+            z-index: 120;
+            transition: all 0.3s ease;
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+        .music-btn.playing {
+            animation: rotate 4s linear infinite;
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .music-btn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        }
+        .bless-icon {
+            position: fixed;
+            bottom: 35px;
+            right: 35px;
+            width: 70px;
+            height: 70px;
+            background: #e63946;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: #fff;
+            box-shadow: 0 5px 18px rgba(230,57,70,0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 110;
+            animation: breath 2s ease-in-out infinite;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            pointer-events: auto;
+        }
+        @keyframes breath {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        body.scroll-active .bless-icon {
+            opacity: 1;
+            visibility: visible;
+        }
+        .bless-icon:hover {
+            transform: scale(1.2);
+            box-shadow: 0 8px 25px rgba(230,57,70,0.7);
+        }
+        .bless-icon-tip {
+            position: fixed;
+            bottom: 120px;
+            right: 55px;
+            background: rgba(255,255,255,0.95);
+            padding: 6px 12px;
+            border-radius: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            color: #e63946;
+            font-size: 14px;
+            z-index: 110;
+            animation: breath 2s ease-in-out infinite;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease 0.2s, visibility 0.5s ease 0.2s;
+        }
+        body.scroll-active .bless-icon-tip {
+            opacity: 1;
+            visibility: visible;
+        }
+        .floating-text {
+            position: absolute;
+            color: #c1121f;
+            font-size: 18px;
+            font-weight: 500;
+            opacity: 0;
+            padding: 10px 15px;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+            pointer-events: none;
+            z-index: 105;
+        }
+        .audio-tip {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.95);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #e63946;
+            font-size: 14px;
+            z-index: 105;
+            white-space: nowrap;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+        .audio-tip.show {
+            opacity: 1;
+        }
+        audio {
+            display: none;
+        }
+        .music-loading {
+            position: fixed;
+            top: 25px;
+            left: 100px;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #666;
+            font-size: 14px;
+            z-index: 105;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .music-loading.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="open-tip">向上滑动看看吧<br>点两下加载一下背景音乐喔</div>
+    <div class="music-btn" id="musicBtn">🎵</div>
+    <div class="letter-container" id="letter"></div>
+    <div class="photo-modal" id="photoModal">
+        <img src="https://youke1.picui.cn/s1/2025/11/05/690b10190f787.png" alt="手写生日祝福" class="photo-img" id="photoImg">
+    </div>
+    <div class="close-photo" id="closePhoto">×</div>
+
+    <div class="bless-icon-tip">看完戳几下🤭</div>
+    <div class="bless-icon" id="blessIcon">🎉</div>
+
+    <!-- 使用免费无版权背景音乐 -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="https://gitee.com/milesgggs/stable-happiness/raw/master/M800002xoG3W38ealw.mp3" type="audio/mpeg">
+        您的浏览器不支持音频播放
+    </audio>
+
+    <script>
+        const body = document.body;
+        const musicBtn = document.getElementById('musicBtn');
+        const bgMusic = document.getElementById('bgMusic');
+        const closePhoto = document.getElementById('closePhoto');
+        const blessIcon = document.getElementById('blessIcon');
+        const blessTip = document.querySelector('.bless-icon-tip');
+
+        // 音乐播放状态
+        let isMusicPlaying = false;
+        let audioInited = false;
+
+        // 创建音乐加载提示
+        const musicLoading = document.createElement('div');
+        musicLoading.className = 'music-loading';
+        musicLoading.textContent = '音乐加载中...';
+        body.appendChild(musicLoading);
+
+        // 页面首次点击初始化音频
+        body.addEventListener('click', initAudio, { once: true });
+
+        // 初始化音频
+        function initAudio() {
+            if (audioInited) return;
+            audioInited = true;
+            
+            // 显示加载提示
+            musicLoading.classList.add('show');
+            
+            // 加载音乐
+            bgMusic.load();
+            
+            // 音乐加载完成
+            bgMusic.oncanplay = () => {
+                musicLoading.classList.remove('show');
+                showMusicTip("点击音符播放音乐", 2000);
+            };
+            
+            // 音乐加载错误
+            bgMusic.onerror = () => {
+                musicLoading.classList.remove('show');
+                showMusicTip("音乐加载失败", 2000);
+            };
+            
+            // 绑定音乐按钮点击事件
+            musicBtn.addEventListener('click', toggleMusic);
+        }
+
+        // 播放/暂停切换
+        function toggleMusic() {
+            if (!audioInited) {
+                initAudio();
+                return;
+            }
+
+            if (isMusicPlaying) {
+                // 暂停音乐
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicBtn.classList.remove('playing');
+                showMusicTip("音乐已暂停", 1500);
+            } else {
+                // 播放音乐
+                const playPromise = bgMusic.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        isMusicPlaying = true;
+                        musicBtn.classList.add('playing');
+                        showMusicTip("音乐正在播放", 1500);
+                    }).catch(error => {
+                        console.error("播放失败:", error);
+                        showMusicTip("播放失败，请点击重试", 2000);
+                    });
+                }
+            }
+        }
+
+        // 显示音乐提示
+        function showMusicTip(text, duration = 1500) {
+            let tip = document.querySelector('.audio-tip');
+            if (!tip) {
+                tip = document.createElement('div');
+                tip.className = 'audio-tip';
+                body.appendChild(tip);
+            }
+            tip.textContent = text;
+            tip.classList.add('show');
+            
+            setTimeout(() => {
+                tip.classList.remove('show');
+            }, duration);
+        }
+
+        // 上滑打开信封
+        window.addEventListener('scroll', () => {
+            const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+            if (scrollTop > 20) body.classList.add('scroll-active');
+        });
+
+        // 关闭照片复位
+        closePhoto.addEventListener('click', () => {
+            body.classList.remove('scroll-active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => {
+                blessTip.style.opacity = 1;
+                blessTip.style.visibility = 'visible';
+            }, 800);
+        });
+
+        // 专属祝福语列表
+        const blessList = [
+            "岁岁无虞 长安常乐（分你点🙆）",
+            "昭昭如愿 岁岁安澜（大方吧(●'◡'●)）",
+"🌟",
+"🎇",
+"🎆",
+            "💤早点睡觉 少熬夜💤",
+"🎆",
+"🌟",
+"🎇",
+            "🧣穿好衣服，天冷盖好被子哦🧣",
+"🎇",
+"🎆",
+"🌟",
+            "👊天天开心，健健康康滴👊",
+"🌟",
+"🎇",
+"🎆",
+            "😎超棒的琪琪，要永远自信😎",
+"🎇",
+"🎆",
+"🌟",
+            "🫣别太累啦，偷偷懒也好🫣",
+"🎇",
+"🌟",
+"♏顺顺利利，梦想成真♏",
+"🎆",
+            "🥵多喝点水，少吃点辣哟🥵",
+"🎆",
+"🌟",
+"🎇",
+            "🎂生日快乐！快乐！快乐！🎂",
+"🎇",
+"🎆",
+"🌟",
+"😃保持微笑，烦恼通通走掉😃",
+
+"💖一定会有稳稳地幸福呀！💖",
+
+ ];
+
+        // 祝福语：一个接一个飘出
+        blessIcon.addEventListener('click', () => {
+            blessTip.style.opacity = 0;
+            setTimeout(() => blessTip.style.visibility = 'hidden', 300);
+
+            // 逐条延迟
+            blessList.forEach((bless, index) => {
+                const itemDelay = 300 + index * 500;
+
+                setTimeout(() => {
+                    const floatText = document.createElement('div');
+                    floatText.className = 'floating-text';
+                    floatText.textContent = bless;
+
+                    // 底部随机位置
+                    const randomX = Math.floor(Math.random() * (window.innerWidth - 220));
+                    const startY = window.innerHeight + 30;
+                    floatText.style.left = `${randomX}px`;
+                    floatText.style.top = `${startY}px`;
+
+                    // 慢速度
+                    const randomDuration = 7 + Math.random() * 2;
+
+                    // 轻微摆动
+                    const randomSwing = 8 + Math.floor(Math.random() * 12);
+                    const randomDir = Math.random() > 0.5 ? 1 : -1;
+
+                    // 平滑动画
+                    floatText.style.animation = `floatOneByOne ${randomDuration}s ease-in-out forwards`;
+                    const style = document.createElement('style');
+                    style.innerHTML = `
+                        @keyframes floatOneByOne {
+                            0% { opacity: 0; transform: translateY(0) translateX(0); }
+                            8% { opacity: 1; transform: translateY(-30px) translateX(0); }
+                            25% { transform: translateY(-${window.innerHeight * 0.2}px) translateX(${randomDir * randomSwing / 3}px); }
+                            50% { transform: translateY(-${window.innerHeight * 0.5}px) translateX(${randomDir * randomSwing}px); }
+                            75% { opacity: 1; transform: translateY(-${window.innerHeight * 0.7}px) translateX(${randomDir * randomSwing / 2}px); }
+                            100% { opacity: 0; transform: translateY(-${window.innerHeight - 30}px) translateX(0); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+
+                    body.appendChild(floatText);
+
+                    // 动画结束清理
+                    setTimeout(() => {
+                        floatText.remove();
+                        style.remove();
+                    }, randomDuration * 1000);
+                }, itemDelay);
+            });
+        });
+
+        // 照片加载失败备用
+        document.getElementById('photoImg').onerror = function() {
+            this.src = "https://via.placeholder.com/1000x800?text=专属祝福";
+        };
+    </script>
+</body>
+</html>
